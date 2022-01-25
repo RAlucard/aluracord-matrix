@@ -1,34 +1,7 @@
 import { Box, Button, Text, TextField, Image } from '@skynexui/components';
+import { useRouter } from 'next/router';
+import React from 'react';
 import appConfig from '../config.json';
-
-function GlobalStyle() {
-  return (
-    <style global jsx>{`
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      list-style: none;
-    }
-    body {
-      font-family: 'Open Sans', sans-serif;
-    }
-    /* App fit Height */ 
-    html, body, #__next {
-      min-height: 100vh;
-      display: flex;
-      flex: 1;
-    }
-    #__next {
-      flex: 1;
-    }
-    #__next > * {
-      flex: 1;
-    }
-    /* ./App fit Height */ 
-  `}</style>
-  );
-}
 
 function Titulo(props) {
   console.log(props);
@@ -59,11 +32,26 @@ function Titulo(props) {
 // export default HomePage
 
 export default function PaginaInicial() {
-  const username = 'RAlucard';
+  const roteamento = useRouter();
+
+  const [userName, setUserName] = React.useState('RAlucard');
+  const [location, setLocation] = React.useState('Rio de Janeiro - Brazil');
+
+  function handleChangeUsername(event) {
+    setUserName(event.target.value);
+
+    if (event.target.value.length >= 3) {
+      fetch(`https://api.github.com/users/${event.target.value}`)
+        .then(response => response.json())
+        .then(data => {
+          // console.log('retorno fetch usuário: ', data);
+          setLocation(data.location || '');
+        });
+    }
+  }
 
   return (
     <>
-      <GlobalStyle />
       <Box
         styleSheet={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -90,6 +78,11 @@ export default function PaginaInicial() {
           {/* Formulário */}
           <Box
             as="form"
+            onSubmit={function (event) {
+              event.preventDefault();
+              // console.log(event);
+              roteamento.push('/chat');
+            }}
             styleSheet={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '32px',
@@ -100,7 +93,21 @@ export default function PaginaInicial() {
               {appConfig.name}
             </Text>
 
+            {/* <input 
+              type="text"
+              value={userName}
+              onChange={function (event){
+                console.log('Digitado: ', event.target.value);
+                // Onde está o valor novo?
+                const valor = event.target.value;
+                // Trocar o valor da variável usando o React
+                setUserName(valor);
+              }}
+            />  */}
             <TextField
+              value={userName}
+              placeholder="Digite um nome de usuário válido!"
+              onChange={handleChangeUsername}
               fullWidth
               textFieldColors={{
                 neutral: {
@@ -147,7 +154,8 @@ export default function PaginaInicial() {
                 borderRadius: '50%',
                 marginBottom: '16px',
               }}
-              src={`https://github.com/${username}.png`}
+              src={userName.length >= 3 ? `https://github.com/${userName}.png` : undefined}
+              alt={userName.length >= 3 ? `Imagem do usuário ${userName}` : ''}
             />
             <Text
               variant="body4"
@@ -158,7 +166,7 @@ export default function PaginaInicial() {
                 borderRadius: '1000px'
               }}
             >
-              {username}
+              {userName.length <= 2 ? 'Informe um nome de usuário' : userName + (location ? ' - ' + location : '')}
             </Text>
           </Box>
           {/* Photo Area */}
