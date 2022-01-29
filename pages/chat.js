@@ -10,7 +10,7 @@ export default function ChatPage() {
   function handleNewMessage(newMessage) {
     if (!newMessage) return; // Quando não for informado nada
     const message = {
-      id: messageList.length + 1,
+      id: Math.random(),
       de: 'RAlucard',
       texto: newMessage
     };
@@ -19,6 +19,12 @@ export default function ChatPage() {
       ...messageList,
     ])
     setMessage('');
+  }
+
+  function handleRemoveMessage(messageId) {
+    // console.log('Excluir mensagem id: ', messageId);
+    const messages = messageList.filter((value) => value.id !== messageId);
+    setMessageList(messages);
   }
 
   // ./Sua lógica vai aqui
@@ -60,7 +66,8 @@ export default function ChatPage() {
           }}
         >
 
-          <MessageList mensagens={messageList} />
+          <MessageList mensagens={messageList}
+            handleRemoveMessage={handleRemoveMessage} />
           {/* Lista de mensagens: "{messageList.map((mensagemAtual) => {
             return (
               <li key={mensagemAtual.id}>
@@ -191,6 +198,25 @@ function MessageList(props) {
               >
                 {(new Date().toLocaleDateString())}
               </Text>
+
+              <Button
+                onClick={() => props.handleRemoveMessage(mensagem.id)
+                  //   () => {
+                  //   // Remover esta mensagem
+                  //   console.log('mensagens: ', props.mensagens, mensagem.id);
+                  //   setMessageList(props.mensagens.filter((a) => {
+                  //     console.log(a, mensagem.id);
+                  //   }))
+                  // }
+                }
+                styleSheet={{
+                  marginRight: '8px',
+                  textAlign: 'center',
+                }}
+                variant='tertiary'
+                colorVariant='neutral'
+                label='X'
+              />
             </Box>
             {mensagem.texto}
           </Text>
