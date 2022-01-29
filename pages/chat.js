@@ -8,6 +8,7 @@ export default function ChatPage() {
   // Sua lógica vai aqui
 
   function handleNewMessage(newMessage) {
+    if (!newMessage) return; // Quando não for informado nada
     const message = {
       id: messageList.length + 1,
       de: 'RAlucard',
@@ -99,6 +100,15 @@ export default function ChatPage() {
                 marginRight: '12px',
                 color: appConfig.theme.colors.neutrals[200],
               }}
+            />
+
+            <Button
+              onClick={() => {
+                handleNewMessage(message);
+              }}
+              variant='secondary'
+              colorVariant='neutral'
+              label='Enviar'
             />
           </Box>
         </Box>
