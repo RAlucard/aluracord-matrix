@@ -1,30 +1,60 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzQyNDAyNywiZXhwIjoxOTU5MDAwMDI3fQ.ZtTEXokN60BRYLJ-qEYwSjmujffs2Cco9HkZe4VCffc';
+const SUPABASE_URL = 'https://tvnmdzxbplgnqhqmuuxp.supabase.co';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 export default function ChatPage() {
   const [message, setMessage] = React.useState('');
   const [messageList, setMessageList] = React.useState([]);
   // Sua lógica vai aqui
 
+  React.useEffect(() => {
+    supabaseClient
+      .from('messages')
+      .select('*')
+      .order('id', { ascending: false })
+      .then(({ data }) => {
+        console.log(data);
+        setMessageList(data)
+      });
+  }, []);
+
   function handleNewMessage(newMessage) {
     if (!newMessage) return; // Quando não for informado nada
     const message = {
-      id: Math.random(),
-      de: 'RAlucard',
-      texto: newMessage
+      from: 'RAlucard',
+      message: newMessage
     };
-    setMessageList([
-      message,
-      ...messageList,
-    ])
+    supabaseClient
+      .from('messages')
+      .insert([
+        message
+      ])
+      .then(({ data }) => {
+        console.log('Criando mensagem: ', data);
+        setMessageList([
+          data[0],
+          ...messageList,
+        ]);
+      });
     setMessage('');
   }
 
   function handleRemoveMessage(messageId) {
     // console.log('Excluir mensagem id: ', messageId);
-    const messages = messageList.filter((value) => value.id !== messageId);
-    setMessageList(messages);
+    supabaseClient
+      .from('messages')
+      .delete()
+      .match({ id: messageId })
+      .then(() => {
+        // Chamar a leitura novamente?
+        const messages = messageList.filter((value) => value.id !== messageId);
+        setMessageList(messages);
+      });
   }
 
   // ./Sua lógica vai aqui
@@ -66,7 +96,7 @@ export default function ChatPage() {
           }}
         >
 
-          <MessageList mensagens={messageList}
+          <MessageList messages={messageList}
             handleRemoveMessage={handleRemoveMessage} />
           {/* Lista de mensagens: "{messageList.map((mensagemAtual) => {
             return (
@@ -156,10 +186,10 @@ function MessageList(props) {
         marginBottom: '16px',
       }}
     >
-      {props.mensagens.map((mensagem) => {
+      {props.messages.map((message) => {
         return (
           <Text
-            key={mensagem.id}
+            key={message.id}
             tag="li"
             styleSheet={{
               borderRadius: '5px',
@@ -183,10 +213,10 @@ function MessageList(props) {
                   display: 'inline-block',
                   marginRight: '8px',
                 }}
-                src={`https://github.com/${mensagem.de}.png`}
+                src={`https://github.com/${message.from}.png`}
               />
               <Text tag="strong">
-                {mensagem.de}
+                {message.from}
               </Text>
               <Text
                 styleSheet={{
@@ -196,11 +226,12 @@ function MessageList(props) {
                 }}
                 tag="span"
               >
-                {(new Date().toLocaleDateString())}
+                {new Date(message.created_at).toLocaleDateString()}&#160;
+                {new Date(message.created_at).toLocaleTimeString()}
               </Text>
 
               <Button
-                onClick={() => props.handleRemoveMessage(mensagem.id)
+                onClick={() => props.handleRemoveMessage(message.id)
                   //   () => {
                   //   // Remover esta mensagem
                   //   console.log('mensagens: ', props.mensagens, mensagem.id);
@@ -218,7 +249,7 @@ function MessageList(props) {
                 label='X'
               />
             </Box>
-            {mensagem.texto}
+            {message.message}
           </Text>
         )
       })}
