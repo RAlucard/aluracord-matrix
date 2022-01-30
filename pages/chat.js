@@ -1,15 +1,32 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
+import { useRouter } from 'next/router';
 import React from 'react';
 import appConfig from '../config.json';
 import { createClient } from '@supabase/supabase-js'
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzQyNDAyNywiZXhwIjoxOTU5MDAwMDI3fQ.ZtTEXokN60BRYLJ-qEYwSjmujffs2Cco9HkZe4VCffc';
 const SUPABASE_URL = 'https://tvnmdzxbplgnqhqmuuxp.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+function escutaMensagensEmTempoReal(addMessage) {
+  return supabaseClient
+    .from('messages')
+    .on('INSERT', (res) => {
+      console.log('Houve uma nova mensagem: ', res.new);
+      addMessage(res.new);
+    })
+    .subscribe();
+}
+
 export default function ChatPage() {
+  const roteamento = useRouter();
+  const userLogged = roteamento.query.userName;
+  // console.log('queryString: ', roteamento.query);
+  // console.log('User Logged: ', userLogged);
   const [message, setMessage] = React.useState('');
   const [messageList, setMessageList] = React.useState([]);
+  // 
   // Sua lógica vai aqui
 
   React.useEffect(() => {
@@ -19,14 +36,23 @@ export default function ChatPage() {
       .order('id', { ascending: false })
       .then(({ data }) => {
         console.log(data);
-        setMessageList(data)
+        setMessageList(data);
       });
+    escutaMensagensEmTempoReal((newMessage) => {
+      console.log('Nova mensagem recebida: ', newMessage);
+      setMessageList((messageList) => {
+        return [
+          newMessage,
+          ...messageList,
+        ];
+      });
+    });
   }, []);
 
   function handleNewMessage(newMessage) {
     if (!newMessage) return; // Quando não for informado nada
     const message = {
-      from: 'RAlucard',
+      from: userLogged,
       message: newMessage
     };
     supabaseClient
@@ -36,10 +62,10 @@ export default function ChatPage() {
       ])
       .then(({ data }) => {
         console.log('Criando mensagem: ', data);
-        setMessageList([
-          data[0],
-          ...messageList,
-        ]);
+        // setMessageList([
+        //   data[0],
+        //   ...messageList,
+        // ]);
       });
     setMessage('');
   }
@@ -82,7 +108,7 @@ export default function ChatPage() {
           padding: '32px',
         }}
       >
-        <Header />
+        <HeaderChat />
         <Box
           styleSheet={{
             position: 'relative',
@@ -138,6 +164,10 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
+            <ButtonSendSticker onStickerClick={(sticker) => {
+              // console.log('Entrou no onStickerClick: ', sticker);
+              handleNewMessage(':sticker:' + sticker)
+            }} />
 
             <Button
               onClick={() => {
@@ -154,7 +184,7 @@ export default function ChatPage() {
   )
 }
 
-function Header() {
+function HeaderChat() {
   return (
     <>
       <Box styleSheet={{ width: '100%', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} >
@@ -173,7 +203,7 @@ function Header() {
 }
 
 function MessageList(props) {
-  console.log('props', props);
+  // console.log('props', props);
   return (
     <Box
       tag="ul"
@@ -249,7 +279,16 @@ function MessageList(props) {
                 label='X'
               />
             </Box>
-            {message.message}
+
+            {message.message.startsWith(':sticker:')
+              ? (
+                <Image
+                  src={message.message.replace(':sticker:', '')}
+                />
+              )
+              : (
+                message.message
+              )}
           </Text>
         )
       })}
