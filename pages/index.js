@@ -4,7 +4,7 @@ import React from 'react';
 import appConfig from '../config.json';
 
 function Titulo(props) {
-  console.log(props);
+  // console.log(props);
   const Tag = props.tag || 'h1';
   return (
     <>

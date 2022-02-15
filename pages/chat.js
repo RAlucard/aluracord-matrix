@@ -13,7 +13,7 @@ function escutaMensagensEmTempoReal(addMessage) {
   return supabaseClient
     .from('messages')
     .on('INSERT', (res) => {
-      console.log('Houve uma nova mensagem: ', res.new);
+      // console.log('Houve uma nova mensagem: ', res.new);
       addMessage(res.new);
     })
     .subscribe();
@@ -29,17 +29,21 @@ export default function ChatPage() {
   // 
   // Sua lógica vai aqui
 
+  // console.log('Aqui: ', `${ process.env.NODE_ENV }`);
+  // console.log('SUPABASE_URL: ', JSON.stringify(`${process.env.SUPABASE_URL}`));
+  // console.log(process.env.SUPABASE_ANON_KEY);
+
   React.useEffect(() => {
     supabaseClient
       .from('messages')
       .select('*')
       .order('id', { ascending: false })
       .then(({ data }) => {
-        console.log(data);
+        // console.log(data);
         setMessageList(data);
       });
     escutaMensagensEmTempoReal((newMessage) => {
-      console.log('Nova mensagem recebida: ', newMessage);
+      // console.log('Nova mensagem recebida: ', newMessage);
       setMessageList((messageList) => {
         return [
           newMessage,
@@ -61,7 +65,7 @@ export default function ChatPage() {
         message
       ])
       .then(({ data }) => {
-        console.log('Criando mensagem: ', data);
+        // console.log('Criando mensagem: ', data);
         // setMessageList([
         //   data[0],
         //   ...messageList,
